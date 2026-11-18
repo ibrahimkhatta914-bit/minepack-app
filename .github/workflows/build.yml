@@ -27,11 +27,9 @@ jobs:
           else
             find . -name "gradlew" -execdir ./gradlew assembleDebug \;
           fi
-        # Verification: Checks that the Gradle build executes successfully.
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
           name: app-debug
-          path: '*.apk'
-        # Verification: Confirms the APK file is successfully generated and uploaded.
+          path: app/build/outputs/apk/debug/*.apk

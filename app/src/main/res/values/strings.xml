@@ -1,0 +1,24 @@
+<resources>
+    <string name="app_name">MinePacks</string>
+    <string name="tab_feed">الرئيسية</string>
+    <string name="tab_profile">بروفايلي</string>
+    <string name="tab_admin">لوحة الأدمن</string>
+    <string name="nav_about">حول التطبيق</string>
+    <string name="login_google">تسجيل الدخول بجوجل</string>
+    <string name="login_admin_title">دخول الأدمن</string>
+    <string name="login_admin_hint">أدخل الكود السري</string>
+    <string name="login_admin_btn">دخول الأدمن</string>
+    <string name="login_admin_wrong">الكود غير صحيح ❌</string>
+    <string name="logout_btn">تسجيل الخروج</string>
+    <string name="search_hint">ابحث باسم الباك...</string>
+    <string name="filter_newest">الأحدث</string>
+    <string name="filter_most_downloaded">الأكثر تحميلاً</string>
+    <string name="download_button">download</string>
+    <string name="add_pack_title">إضافة باك جديد</string>
+    <string name="username_prompt_title">اختر اسم المستخدم</string>
+    <string name="username_prompt_subtitle">سيظهر هذا الاسم لجميع اللاعبين في المنصة</string>
+    <string name="cd_app_logo">شعار تطبيق MinePacks</string>
+    <string name="cd_pack_cover">صورة الريسورس باك</string>
+    <string name="cd_user_avatar">صورة المستخدم</string>
+    <string name="cd_hero_banner">بانر MinePacks</string>
+</resources>

@@ -1,0 +1,171 @@
+{
+  "entities": {
+    "UserProfile": {
+      "title": "UserProfile",
+      "description": "Public profile for a MinePacks user without PII",
+      "type": "object",
+      "properties": {
+        "userId": {
+          "type": "string",
+          "description": "Firebase Auth UID of the user"
+        },
+        "username": {
+          "type": "string",
+          "description": "Public display username chosen by the user"
+        },
+        "avatarUrl": {
+          "type": "string",
+          "description": "Optional Google profile photo URL"
+        },
+        "isPublicProfile": {
+          "type": "boolean",
+          "description": "Always true to allow public profile queries"
+        },
+        "packsCount": {
+          "type": "integer",
+          "description": "Cached count of packs published by the user"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server timestamp when profile was created (FieldValue.serverTimestamp())"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server timestamp when profile was updated (FieldValue.serverTimestamp())"
+        }
+      },
+      "required": [
+        "userId",
+        "username",
+        "isPublicProfile",
+        "packsCount",
+        "createdAt",
+        "updatedAt"
+      ]
+    },
+    "ResourcePack": {
+      "title": "ResourcePack",
+      "description": "Minecraft resource pack post in the MinePacks feed",
+      "type": "object",
+      "properties": {
+        "title": {
+          "type": "string",
+          "description": "Resource pack display name"
+        },
+        "description": {
+          "type": "string",
+          "description": "Optional short description of the pack"
+        },
+        "imageUrl": {
+          "type": "string",
+          "description": "Cover image URL, preset key, or compressed data URI"
+        },
+        "downloadUrl": {
+          "type": "string",
+          "description": "External HTTPS/HTTP download link for the resource pack"
+        },
+        "authorId": {
+          "type": "string",
+          "description": "UID of the publisher"
+        },
+        "authorName": {
+          "type": "string",
+          "description": "Username of the publisher"
+        },
+        "authorAvatarUrl": {
+          "type": "string",
+          "description": "Optional avatar URL of the publisher"
+        },
+        "downloadsCount": {
+          "type": "integer",
+          "description": "Number of downloads"
+        },
+        "likesCount": {
+          "type": "integer",
+          "description": "Number of likes"
+        },
+        "visibility": {
+          "type": "string",
+          "enum": ["public"],
+          "description": "Visibility of the pack post"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server timestamp when pack was created (FieldValue.serverTimestamp())"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server timestamp when pack was updated (FieldValue.serverTimestamp())"
+        }
+      },
+      "required": [
+        "title",
+        "imageUrl",
+        "downloadUrl",
+        "authorId",
+        "authorName",
+        "downloadsCount",
+        "likesCount",
+        "visibility",
+        "createdAt",
+        "updatedAt"
+      ]
+    },
+    "PackLike": {
+      "title": "PackLike",
+      "description": "Per-user like record on a resource pack",
+      "type": "object",
+      "properties": {
+        "userId": {
+          "type": "string",
+          "description": "UID of the user who liked the pack"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server timestamp when like was created (FieldValue.serverTimestamp())"
+        }
+      },
+      "required": [
+        "userId",
+        "createdAt"
+      ]
+    },
+    "AdminMarker": {
+      "title": "AdminMarker",
+      "description": "Trusted server-managed admin privilege record",
+      "type": "object",
+      "properties": {
+        "userId": {
+          "type": "string",
+          "description": "UID of the admin user"
+        }
+      },
+      "required": [
+        "userId"
+      ]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": { "$ref": "#/entities/UserProfile" },
+      "description": "Public user profiles keyed by Firebase Auth UID"
+    },
+    "/packs/{packId}": {
+      "schema": { "$ref": "#/entities/ResourcePack" },
+      "description": "Published Minecraft resource pack posts"
+    },
+    "/packs/{packId}/likes/{likeUserId}": {
+      "schema": { "$ref": "#/entities/PackLike" },
+      "description": "Likes subcollection keyed by liking user UID"
+    },
+    "/admins/{adminUid}": {
+      "schema": { "$ref": "#/entities/AdminMarker" },
+      "description": "Admin role markers"
+    }
+  }
+}

@@ -1,0 +1,6 @@
+{
+  "name": "MinePacks",
+  "description": "منصة لنشر وتحميل ريسورس باكات ماين كرافت بتصميم عربي RTL",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

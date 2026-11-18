@@ -1,0 +1,206 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Default deny safety net
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() >= 1 && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isAdmin() {
+      return isSignedIn() && (
+        ('email' in request.auth.token &&
+         'email_verified' in request.auth.token &&
+         request.auth.token.email == 'ibrahimkhatta914@gmail.com' &&
+         request.auth.token.email_verified == true) ||
+        exists(/databases/$(database)/documents/admins/$(request.auth.uid))
+      );
+    }
+
+    function isValidUserProfile(data) {
+      return data.userId is string &&
+             isValidId(data.userId) &&
+             data.username is string &&
+             data.username.size() >= 2 &&
+             data.username.size() <= 30 &&
+             (!('avatarUrl' in data) || data.avatarUrl == null || (data.avatarUrl is string && data.avatarUrl.size() <= 500)) &&
+             data.isPublicProfile is bool &&
+             data.packsCount is int &&
+             data.packsCount >= 0;
+    }
+
+    function isValidPack(data) {
+      return data.title is string &&
+             data.title.size() >= 2 &&
+             data.title.size() <= 80 &&
+             (!('description' in data) || data.description == null || (data.description is string && data.description.size() <= 300)) &&
+             data.imageUrl is string &&
+             data.imageUrl.size() >= 5 &&
+             data.imageUrl.size() <= 350000 &&
+             data.downloadUrl is string &&
+             data.downloadUrl.size() >= 8 &&
+             data.downloadUrl.size() <= 1000 &&
+             data.downloadUrl.matches('^https?://.+') &&
+             data.authorId is string &&
+             isValidId(data.authorId) &&
+             data.authorName is string &&
+             data.authorName.size() >= 2 &&
+             data.authorName.size() <= 30 &&
+             (!('authorAvatarUrl' in data) || data.authorAvatarUrl == null || (data.authorAvatarUrl is string && data.authorAvatarUrl.size() <= 500)) &&
+             data.downloadsCount is int &&
+             data.downloadsCount >= 0 &&
+             data.likesCount is int &&
+             data.likesCount >= 0 &&
+             data.visibility == 'public';
+    }
+
+    function isValidPackLike(data) {
+      return data.userId is string &&
+             isValidId(data.userId);
+    }
+
+    match /users/{userId} {
+      allow get: if isSignedIn() && isValidId(userId) && (
+        request.auth.uid == userId ||
+        existing().isPublicProfile == true ||
+        isAdmin()
+      );
+
+      allow list: if isSignedIn() && (
+        existing().isPublicProfile == true ||
+        isAdmin()
+      );
+
+      allow create: if isSignedIn() &&
+                       isValidId(userId) &&
+                       request.auth.uid == userId &&
+                       incoming().userId == request.auth.uid &&
+                       incoming().isPublicProfile == true &&
+                       incoming().packsCount == 0 &&
+                       incoming().keys().hasAll(['userId', 'username', 'isPublicProfile', 'packsCount', 'createdAt', 'updatedAt']) &&
+                       incoming().keys().hasOnly(['userId', 'username', 'avatarUrl', 'isPublicProfile', 'packsCount', 'createdAt', 'updatedAt']) &&
+                       incoming().createdAt is timestamp &&
+                       incoming().createdAt <= request.time &&
+                       incoming().updatedAt is timestamp &&
+                       incoming().updatedAt <= request.time &&
+                       isValidUserProfile(incoming());
+
+      allow update: if isSignedIn() &&
+                       isValidId(userId) &&
+                       isValidUserProfile(incoming()) &&
+                       incoming().userId == existing().userId &&
+                       incoming().createdAt == existing().createdAt &&
+                       incoming().isPublicProfile == existing().isPublicProfile &&
+                       incoming().updatedAt is timestamp &&
+                       incoming().updatedAt <= request.time && (
+                         isAdmin() ||
+                         (request.auth.uid == userId &&
+                          incoming().diff(existing()).affectedKeys().hasOnly(['username', 'avatarUrl', 'packsCount', 'updatedAt']))
+                       );
+
+      allow delete: if isSignedIn() && isValidId(userId) && (
+        request.auth.uid == userId ||
+        isAdmin()
+      );
+    }
+
+    match /packs/{packId} {
+      allow get: if isSignedIn() && isValidId(packId) && (
+        existing().visibility == 'public' ||
+        existing().authorId == request.auth.uid ||
+        isAdmin()
+      );
+
+      allow list: if isSignedIn() && (
+        existing().visibility == 'public' ||
+        existing().authorId == request.auth.uid ||
+        isAdmin()
+      );
+
+      allow create: if isSignedIn() &&
+                       isValidId(packId) &&
+                       incoming().authorId == request.auth.uid &&
+                       incoming().visibility == 'public' &&
+                       incoming().downloadsCount == 0 &&
+                       incoming().likesCount == 0 &&
+                       incoming().keys().hasAll(['title', 'imageUrl', 'downloadUrl', 'authorId', 'authorName', 'downloadsCount', 'likesCount', 'visibility', 'createdAt', 'updatedAt']) &&
+                       incoming().keys().hasOnly(['title', 'description', 'imageUrl', 'downloadUrl', 'authorId', 'authorName', 'authorAvatarUrl', 'downloadsCount', 'likesCount', 'visibility', 'createdAt', 'updatedAt']) &&
+                       incoming().createdAt is timestamp &&
+                       incoming().createdAt <= request.time &&
+                       incoming().updatedAt is timestamp &&
+                       incoming().updatedAt <= request.time &&
+                       isValidPack(incoming());
+
+      allow update: if isSignedIn() &&
+                       isValidId(packId) &&
+                       isValidPack(incoming()) &&
+                       incoming().authorId == existing().authorId &&
+                       incoming().createdAt == existing().createdAt &&
+                       incoming().updatedAt is timestamp &&
+                       incoming().updatedAt <= request.time && (
+                         isAdmin() ||
+                         (existing().authorId == request.auth.uid &&
+                          incoming().diff(existing()).affectedKeys().hasOnly(['title', 'description', 'imageUrl', 'downloadUrl', 'visibility', 'updatedAt'])) ||
+                         (incoming().diff(existing()).affectedKeys().hasOnly(['downloadsCount', 'updatedAt']) &&
+                          incoming().downloadsCount == existing().downloadsCount + 1) ||
+                         (incoming().diff(existing()).affectedKeys().hasOnly(['likesCount', 'updatedAt']) && (
+                           (incoming().likesCount == existing().likesCount + 1 &&
+                            !exists(/databases/$(database)/documents/packs/$(packId)/likes/$(request.auth.uid)) &&
+                            existsAfter(/databases/$(database)/documents/packs/$(packId)/likes/$(request.auth.uid))) ||
+                           (incoming().likesCount == existing().likesCount - 1 &&
+                            exists(/databases/$(database)/documents/packs/$(packId)/likes/$(request.auth.uid)) &&
+                            !existsAfter(/databases/$(database)/documents/packs/$(packId)/likes/$(request.auth.uid)))
+                         ))
+                       );
+
+      allow delete: if isSignedIn() && isValidId(packId) && (
+        existing().authorId == request.auth.uid ||
+        isAdmin()
+      );
+
+      match /likes/{likeUserId} {
+        allow get: if isSignedIn() && isValidId(packId) && isValidId(likeUserId) && request.auth.uid == likeUserId;
+
+        allow list: if isSignedIn() && isValidId(packId) && existing().userId == request.auth.uid;
+
+        allow create: if isSignedIn() &&
+                         isValidId(packId) &&
+                         isValidId(likeUserId) &&
+                         request.auth.uid == likeUserId &&
+                         incoming().userId == request.auth.uid &&
+                         incoming().keys().hasAll(['userId', 'createdAt']) &&
+                         incoming().keys().hasOnly(['userId', 'createdAt']) &&
+                         incoming().createdAt is timestamp &&
+                         incoming().createdAt <= request.time &&
+                         isValidPackLike(incoming()) &&
+                         exists(/databases/$(database)/documents/packs/$(packId));
+
+        allow update: if false;
+
+        allow delete: if isSignedIn() && isValidId(packId) && isValidId(likeUserId) && request.auth.uid == likeUserId;
+      }
+    }
+
+    match /admins/{adminUid} {
+      allow get: if isSignedIn() && isValidId(adminUid) && request.auth.uid == adminUid;
+      allow list, create, update, delete: if false;
+    }
+  }
+}

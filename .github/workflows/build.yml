@@ -19,7 +19,7 @@ jobs:
           java-version: '17'
           distribution: 'temurin'
 
-      - name: Grant Execute Permission & Build
+      - name: Build with Gradle
         run: |
           chmod +x gradlew || find . -name "gradlew" -exec chmod +x {} \;
           if [ -f "./gradlew" ]; then
@@ -33,5 +33,5 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: app-debug
-          path: '**/build/outputs/apk/debug/app-debug.apk'
+          path: '*.apk'
         # Verification: Confirms the APK file is successfully generated and uploaded.
